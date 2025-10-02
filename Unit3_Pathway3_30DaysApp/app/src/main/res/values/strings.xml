@@ -1,0 +1,102 @@
+<resources>
+    <string name="app_name">30 Days of English</string>
+
+    <!-- Day 1–7: Daily life -->
+    <string name="word_1">Day 1: Hello</string>
+    <string name="desc_1">Xin chào – Hello, how are you?</string>
+
+    <string name="word_2">Day 2: Thank you</string>
+    <string name="desc_2">Cảm ơn – Thank you for your help.</string>
+
+    <string name="word_3">Day 3: Sorry</string>
+    <string name="desc_3">Xin lỗi – I am sorry for being late.</string>
+
+    <string name="word_4">Day 4: Good morning</string>
+    <string name="desc_4">Chào buổi sáng – Good morning, teacher!</string>
+
+    <string name="word_5">Day 5: Good night</string>
+    <string name="desc_5">Chúc ngủ ngon – Good night, see you tomorrow.</string>
+
+    <string name="word_6">Day 6: See you later</string>
+    <string name="desc_6">Hẹn gặp lại – See you later, my friend.</string>
+
+    <string name="word_7">Day 7: How are you?</string>
+    <string name="desc_7">Bạn khỏe không – How are you today?</string>
+
+    <!-- Day 8–14: Food & Drink -->
+    <string name="word_8">Day 8: Water</string>
+    <string name="desc_8">Nước – I drink water every day.</string>
+
+    <string name="word_9">Day 9: Coffee</string>
+    <string name="desc_9">Cà phê – Do you like coffee?</string>
+
+    <string name="word_10">Day 10: Rice</string>
+    <string name="desc_10">Cơm – We eat rice for lunch.</string>
+
+    <string name="word_11">Day 11: Bread</string>
+    <string name="desc_11">Bánh mì – I bought some bread.</string>
+
+    <string name="word_12">Day 12: Chicken</string>
+    <string name="desc_12">Gà – I eat chicken for dinner.</string>
+
+    <string name="word_13">Day 13: Apple</string>
+    <string name="desc_13">Táo – An apple a day keeps the doctor away.</string>
+
+    <string name="word_14">Day 14: Delicious</string>
+    <string name="desc_14">Ngon – This food is delicious!</string>
+
+    <!-- Day 15–21: Travel -->
+    <string name="word_15">Day 15: Bus</string>
+    <string name="desc_15">Xe buýt – I take the bus to school.</string>
+
+    <string name="word_16">Day 16: Taxi</string>
+    <string name="desc_16">Taxi – We go to the hotel by taxi.</string>
+
+    <string name="word_17">Day 17: Train</string>
+    <string name="desc_17">Tàu – The train is very fast.</string>
+
+    <string name="word_18">Day 18: Ticket</string>
+    <string name="desc_18">Vé – I bought a train ticket.</string>
+
+    <string name="word_19">Day 19: Hotel</string>
+    <string name="desc_19">Khách sạn – The hotel is near the beach.</string>
+
+    <string name="word_20">Day 20: Airport</string>
+    <string name="desc_20">Sân bay – The airport is very big.</string>
+
+    <string name="word_21">Day 21: Luggage</string>
+    <string name="desc_21">Hành lý – My luggage is heavy.</string>
+
+    <!-- Day 22–28: Study & Work -->
+    <string name="word_22">Day 22: Book</string>
+    <string name="desc_22">Sách – I read a book every night.</string>
+
+    <string name="word_23">Day 23: Pen</string>
+    <string name="desc_23">Bút – Please give me a pen.</string>
+
+    <string name="word_24">Day 24: Desk</string>
+    <string name="desc_24">Bàn – My computer is on the desk.</string>
+
+    <string name="word_25">Day 25: Computer</string>
+    <string name="desc_25">Máy tính – I use a computer for work.</string>
+
+    <string name="word_26">Day 26: Teacher</string>
+    <string name="desc_26">Giáo viên – The teacher is very kind.</string>
+
+    <string name="word_27">Day 27: Student</string>
+    <string name="desc_27">Học sinh – The student is studying English.</string>
+
+    <string name="word_28">Day 28: Homework</string>
+    <string name="desc_28">Bài tập – I finish my homework before dinner.</string>
+
+    <!-- Day 29–30: Feelings -->
+    <string name="word_29">Day 29: Happy</string>
+    <string name="desc_29">Vui – She is very happy today.</string>
+
+    <string name="word_30">Day 30: Sad</string>
+    <string name="desc_30">Buồn – He feels sad when it rains.</string>
+
+    <!-- Common -->
+    <string name="about">About:</string>
+    <string name="expand_button_content_description">See more or less information about a word.</string>
+</resources>
