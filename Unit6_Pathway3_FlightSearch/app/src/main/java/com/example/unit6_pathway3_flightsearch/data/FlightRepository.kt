@@ -1,36 +1,24 @@
 package com.example.unit6_pathway3_flightsearch.data
 
 import kotlinx.coroutines.flow.Flow
+import javax.inject.Inject
 
 interface FlightRepository {
     fun getAirportSuggestions(query: String): Flow<List<Airport>>
-    fun getAllFavoriteFlights(): Flow<List<FavoriteFlight>>
-    fun getAirportByCode(iataCode: String): Flow<Airport>
-    fun getAllOtherAirports(iataCode: String): Flow<List<Airport>>
-    suspend fun insertFavorite(favorite: Favorite)
-    suspend fun deleteFavorite(favorite: Favorite)
-    fun getFavorite(departureCode: String, destinationCode: String): Flow<Favorite?>
+    fun getAllAirports(): Flow<List<Airport>>
+    suspend fun getFavoriteFlight(departureCode: String, destinationCode: String): Favorite?
+    fun getFavoriteFlights(): Flow<List<FavoriteFlight>>
+    suspend fun insertFavoriteFlight(favorite: Favorite)
+    suspend fun deleteFavoriteFlight(favorite: Favorite)
 }
 
-class OfflineFlightRepository(private val flightDao: FlightDao) : FlightRepository {
-    override fun getAirportSuggestions(query: String): Flow<List<Airport>> =
-        flightDao.getAirportSuggestions(query)
-
-    override fun getAllFavoriteFlights(): Flow<List<FavoriteFlight>> =
-        flightDao.getAllFavoriteFlights()
-
-    override fun getAirportByCode(iataCode: String): Flow<Airport> =
-        flightDao.getAirportByCode(iataCode)
-
-    override fun getAllOtherAirports(iataCode: String): Flow<List<Airport>> =
-        flightDao.getAllOtherAirports(iataCode)
-
-    override suspend fun insertFavorite(favorite: Favorite) =
-        flightDao.insertFavorite(favorite)
-
-    override suspend fun deleteFavorite(favorite: Favorite) =
-        flightDao.deleteFavorite(favorite)
-
-    override fun getFavorite(departureCode: String, destinationCode: String): Flow<Favorite?> =
-        flightDao.getFavorite(departureCode, destinationCode)
+class FlightRepositoryImpl @Inject constructor(
+    private val flightDao: FlightDao
+) : FlightRepository {
+    override fun getAirportSuggestions(query: String): Flow<List<Airport>> = flightDao.getAirportSuggestions(query)
+    override fun getAllAirports(): Flow<List<Airport>> = flightDao.getAllAirports()
+    override suspend fun getFavoriteFlight(departureCode: String, destinationCode: String): Favorite? = flightDao.getFavoriteFlight(departureCode, destinationCode)
+    override fun getFavoriteFlights(): Flow<List<FavoriteFlight>> = flightDao.getFavoriteFlights()
+    override suspend fun insertFavoriteFlight(favorite: Favorite) = flightDao.insertFavoriteFlight(favorite)
+    override suspend fun deleteFavoriteFlight(favorite: Favorite) = flightDao.deleteFavoriteFlight(favorite)
 }

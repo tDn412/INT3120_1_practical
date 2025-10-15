@@ -1,63 +1,98 @@
-package com.example.unit6_pathway3_flightsearch.ui
+package com.example.unit6_pathway3_flightsearch
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.unit6_pathway3_flightsearch.FlightSearchViewModel
 import com.example.unit6_pathway3_flightsearch.data.Airport
 import com.example.unit6_pathway3_flightsearch.data.FavoriteFlight
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
+import com.example.unit6_pathway3_flightsearch.ui.FlightSearchViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FlightSearchScreen(
+    modifier: Modifier = Modifier,
     viewModel: FlightSearchViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val suggestions by viewModel.suggestions.collectAsState()
+    val favoriteFlights by viewModel.favoriteFlights.collectAsState()
+    val destinationFlights by viewModel.destinationFlights.collectAsState()
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Flight Search") })
-        }
-    ) { paddingValues ->
-        Column(modifier = Modifier.padding(paddingValues).padding(16.dp)) {
-            SearchBar(
-                query = uiState.searchQuery,
-                onQueryChange = viewModel::onQueryChange
+            TopAppBar(
+                title = { Text("Flight Search") }
             )
-            Spacer(modifier = Modifier.height(16.dp))
+        }
+    ) { innerPadding ->
+        Column(modifier = modifier.padding(innerPadding)) {
+            SearchTextField(
+                query = uiState.searchQuery,
+                onQueryChange = viewModel::onQueryChange,
+                modifier = Modifier.padding(16.dp)
+            )
 
-            // Hiển thị nội dung dựa trên trạng thái
             if (uiState.searchQuery.isBlank()) {
-                FavoriteRoutesList(
-                    favoriteFlights = uiState.favoriteFlights,
-                    onToggleFavorite = viewModel::toggleFavorite
-                )
-            } else if (uiState.selectedAirport == null) {
-                SuggestionsList(
-                    suggestions = uiState.suggestions,
-                    onAirportSelected = viewModel::onAirportSelected
-                )
+                if (uiState.selectedAirport == null) {
+                    if (favoriteFlights.isNotEmpty()) {
+                        FavoriteList(
+                            favoriteFlights = favoriteFlights,
+                            onFavoriteClick = viewModel::onFavoriteClick,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("No favorite routes yet.")
+                        }
+                    }
+                } else {
+                    FlightResultsList(
+                        departureAirport = uiState.selectedAirport!!,
+                        destinationAirports = destinationFlights,
+                        favoriteFlights = favoriteFlights.map { it.destinationCode },
+                        onFavoriteClick = viewModel::onFavoriteClick,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             } else {
-                FlightResultsList(
-                    departureAirport = uiState.selectedAirport!!,
-                    flights = uiState.flights,
-                    favoriteFlights = uiState.favoriteFlights,
-                    onToggleFavorite = viewModel::toggleFavorite
+                SuggestionList(
+                    suggestions = suggestions,
+                    onSuggestionClick = viewModel::onAirportSelected,
+                    modifier = Modifier.fillMaxSize()
                 )
             }
         }
@@ -65,34 +100,44 @@ fun FlightSearchScreen(
 }
 
 @Composable
-fun SearchBar(query: String, onQueryChange: (String) -> Unit) {
-    OutlinedTextField(
+fun SearchTextField(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    TextField(
         value = query,
         onValueChange = onQueryChange,
-        label = { Text("Enter departure airport") },
+        placeholder = { Text("Enter departure airport") },
         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-        modifier = Modifier.fillMaxWidth(),
-        singleLine = true
+        modifier = modifier.fillMaxWidth(),
+        singleLine = true,
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+            disabledContainerColor = MaterialTheme.colorScheme.surface,
+        )
     )
 }
 
 @Composable
-fun SuggestionsList(
+fun SuggestionList(
     suggestions: List<Airport>,
-    onAirportSelected: (Airport) -> Unit
+    onSuggestionClick: (Airport) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    LazyColumn {
-        items(suggestions) { airport ->
+    LazyColumn(modifier = modifier) {
+        items(suggestions, key = { it.id }) { airport ->
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { onAirportSelected(airport) }
-                    .padding(vertical = 8.dp)
+                    .clickable { onSuggestionClick(airport) }
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 Text(
                     text = airport.iataCode,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.width(60.dp)
+                    modifier = Modifier.padding(end = 8.dp)
                 )
                 Text(text = airport.name)
             }
@@ -101,67 +146,107 @@ fun SuggestionsList(
 }
 
 @Composable
-fun FlightResultsList(
-    departureAirport: Airport,
-    flights: List<Airport>,
+fun FavoriteList(
     favoriteFlights: List<FavoriteFlight>,
-    onToggleFavorite: (String, String) -> Unit
+    onFavoriteClick: (String, String) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Column {
-        Text("Flights from ${departureAirport.iataCode}", style = MaterialTheme.typography.titleMedium)
-        Spacer(modifier = Modifier.height(8.dp))
-        LazyColumn {
-            items(flights) { destinationAirport ->
-                FlightRow(
-                    departureAirport = departureAirport,
-                    destinationAirport = destinationAirport,
-                    isFavorite = favoriteFlights.any {
-                        it.departureCode == departureAirport.iataCode && it.destinationCode == destinationAirport.iataCode
-                    },
-                    onToggleFavorite = onToggleFavorite
+    LazyColumn(modifier = modifier.padding(horizontal = 16.dp)) {
+        item {
+            Text(
+                text = "Favorite Routes",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+        }
+        items(favoriteFlights, key = { it.id }) { flight ->
+            FavoriteRow(
+                favoriteFlight = flight,
+                onFavoriteClick = onFavoriteClick,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+        }
+    }
+}
+
+@Composable
+fun FavoriteRow(
+    favoriteFlight: FavoriteFlight,
+    onFavoriteClick: (String, String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text("DEPART", style = MaterialTheme.typography.labelMedium)
+                Text(
+                    text = "${favoriteFlight.departureCode} ${favoriteFlight.departureName}",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Spacer(Modifier.height(8.dp))
+                Text("ARRIVE", style = MaterialTheme.typography.labelMedium)
+                Text(
+                    text = "${favoriteFlight.destinationCode} ${favoriteFlight.destinationName}",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            }
+            IconButton(onClick = { onFavoriteClick(favoriteFlight.departureCode, favoriteFlight.destinationCode) }) {
+                Icon(
+                    imageVector = Icons.Default.Star,
+                    contentDescription = "Remove from favorites",
+                    tint = Color(0xFFFFC107) // Gold color for favorite
                 )
             }
         }
     }
 }
 
-@Composable
-fun FavoriteRoutesList(
-    favoriteFlights: List<FavoriteFlight>,
-    onToggleFavorite: (String, String) -> Unit
-) {
-    Column {
-        Text(
-            "Favorite routes",
-            style = MaterialTheme.typography.titleMedium
-        )
-        Spacer(modifier = Modifier.height(8.dp))
 
-        if (favoriteFlights.isEmpty()) {
-            Text("You have no favorite routes yet.")
-        } else {
-            LazyColumn {
-                items(favoriteFlights) { flight ->
-                    FavoriteFlightCard(flight = flight, onToggleFavorite = onToggleFavorite)
-                }
-            }
+@Composable
+fun FlightResultsList(
+    departureAirport: Airport,
+    destinationAirports: List<Airport>,
+    favoriteFlights: List<String>,
+    onFavoriteClick: (String, String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    LazyColumn(modifier = modifier.padding(horizontal = 16.dp)) {
+        item {
+            Text(
+                text = "Flights from ${departureAirport.iataCode}",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+        }
+        items(destinationAirports, key = { it.id }) { destination ->
+            FlightRow(
+                departureAirport = departureAirport,
+                destinationAirport = destination,
+                isFavorite = destination.iataCode in favoriteFlights,
+                onFavoriteClick = onFavoriteClick
+            )
         }
     }
 }
-
 
 @Composable
 fun FlightRow(
     departureAirport: Airport,
     destinationAirport: Airport,
     isFavorite: Boolean,
-    onToggleFavorite: (String, String) -> Unit
+    onFavoriteClick: (String, String) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 8.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
@@ -170,72 +255,24 @@ fun FlightRow(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text("DEPART", style = MaterialTheme.typography.labelMedium)
-                AirportInfo(airport = departureAirport)
-                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "${departureAirport.iataCode} ${departureAirport.name}",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Spacer(Modifier.height(8.dp))
                 Text("ARRIVE", style = MaterialTheme.typography.labelMedium)
-                AirportInfo(airport = destinationAirport)
+                Text(
+                    text = "${destinationAirport.iataCode} ${destinationAirport.name}",
+                    style = MaterialTheme.typography.bodyLarge
+                )
             }
-            IconButton(
-                onClick = {
-                    onToggleFavorite(departureAirport.iataCode, destinationAirport.iataCode)
-                }
-            ) {
+            IconButton(onClick = { onFavoriteClick(departureAirport.iataCode, destinationAirport.iataCode) }) {
                 Icon(
                     imageVector = Icons.Default.Star,
-                    contentDescription = "Favorite",
+                    contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
                     tint = if (isFavorite) Color(0xFFFFC107) else Color.LightGray
                 )
             }
         }
     }
 }
-
-@Composable
-fun FavoriteFlightCard(
-    flight: FavoriteFlight,
-    onToggleFavorite: (String, String) -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text("DEPART", style = MaterialTheme.typography.labelMedium)
-                AirportInfo(code = flight.departureCode, name = flight.departureName)
-                Spacer(modifier = Modifier.height(8.dp))
-                Text("ARRIVE", style = MaterialTheme.typography.labelMedium)
-                AirportInfo(code = flight.destinationCode, name = flight.destinationName)
-            }
-            IconButton(
-                onClick = { onToggleFavorite(flight.departureCode, flight.destinationCode) }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Star,
-                    contentDescription = "Remove from Favorite",
-                    tint = Color(0xFFFFC107)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun AirportInfo(airport: Airport) {
-    AirportInfo(code = airport.iataCode, name = airport.name)
-}
-
-@Composable
-fun AirportInfo(code: String, name: String) {
-    Row {
-        Text(text = code, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(text = name)
-    }
-}
-

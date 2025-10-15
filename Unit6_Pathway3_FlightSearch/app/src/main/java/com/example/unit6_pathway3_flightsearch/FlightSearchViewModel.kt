@@ -1,10 +1,24 @@
-package com.example.unit6_pathway3_flightsearch
+package com.example.unit6_pathway3_flightsearch.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.unit6_pathway3_flightsearch.data.*
+import com.example.unit6_pathway3_flightsearch.data.Airport
+import com.example.unit6_pathway3_flightsearch.data.Favorite
+import com.example.unit6_pathway3_flightsearch.data.FavoriteFlight
+import com.example.unit6_pathway3_flightsearch.data.FlightRepository
+import com.example.unit6_pathway3_flightsearch.data.UserPreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -18,64 +32,87 @@ class FlightSearchViewModel @Inject constructor(
     val uiState: StateFlow<FlightSearchUiState> = _uiState.asStateFlow()
 
     init {
-        // Lắng nghe thay đổi từ DataStore và cập nhật truy vấn tìm kiếm
+        // Tải truy vấn tìm kiếm đã lưu khi ViewModel được khởi tạo
         viewModelScope.launch {
-            userPreferencesRepository.searchQuery
-                .collect { query ->
-                    _uiState.update { it.copy(searchQuery = query) }
-                    // Khi có query, thực hiện tìm kiếm gợi ý
-                    if (query.isNotBlank()) {
-                        flightRepository.getAirportSuggestions(query).collect { suggestions ->
-                            _uiState.update { it.copy(suggestions = suggestions) }
-                        }
-                    } else {
-                        // Nếu không có query, xóa gợi ý và danh sách chuyến bay, hiển thị favorite
-                        _uiState.update {
-                            it.copy(
-                                suggestions = emptyList(),
-                                flights = emptyList(),
-                                selectedAirport = null
-                            )
-                        }
-                    }
-                }
-        }
-
-        viewModelScope.launch {
-            flightRepository.getAllFavoriteFlights().collect { favorites ->
-                _uiState.update { it.copy(favoriteFlights = favorites) }
+            _uiState.update {
+                it.copy(searchQuery = userPreferencesRepository.searchQuery.first())
             }
         }
     }
 
+    // Flow này sẽ tự động cập nhật danh sách gợi ý mỗi khi searchQuery thay đổi
+    val suggestions: StateFlow<List<Airport>> = uiState
+        .flatMapLatest { state ->
+            if (state.searchQuery.isBlank()) {
+                flowOf(emptyList())
+            } else {
+                flightRepository.getAirportSuggestions(state.searchQuery)
+            }
+        }
+        .distinctUntilChanged()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList()
+        )
+
+    val favoriteFlights: StateFlow<List<FavoriteFlight>> =
+        flightRepository.getFavoriteFlights()
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = emptyList()
+            )
+
+    val destinationFlights: StateFlow<List<Airport>> =
+        combine(
+            uiState,
+            flightRepository.getAllAirports()
+        ) { state, allAirports ->
+            state.selectedAirport?.let { selected ->
+                allAirports.filterNot { it.id == selected.id }
+            } ?: emptyList()
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList()
+        )
+
+
     fun onQueryChange(query: String) {
+        // Cập nhật UI state ngay lập tức
+        _uiState.update { it.copy(searchQuery = query) }
+        // Lưu vào DataStore như một tác vụ nền
         viewModelScope.launch {
             userPreferencesRepository.saveSearchQuery(query)
         }
     }
 
     fun onAirportSelected(airport: Airport) {
-        _uiState.update { it.copy(selectedAirport = airport, searchQuery = airport.iataCode) }
+        // Cập nhật sân bay đã chọn và xóa ô tìm kiếm
+        _uiState.update {
+            it.copy(
+                selectedAirport = airport,
+                searchQuery = ""
+            )
+        }
+        // Lưu chuỗi tìm kiếm rỗng vào DataStore
         viewModelScope.launch {
-            userPreferencesRepository.saveSearchQuery(airport.iataCode) // Lưu lựa chọn mới
-            flightRepository.getAllOtherAirports(airport.iataCode).collect { flights ->
-                _uiState.update { it.copy(flights = flights, suggestions = emptyList()) }
-            }
+            userPreferencesRepository.saveSearchQuery("")
         }
     }
 
-    fun toggleFavorite(departureCode: String, destinationCode: String) {
+    fun onFavoriteClick(departureCode: String, destinationCode: String) {
         viewModelScope.launch {
-            val favorite = flightRepository.getFavorite(departureCode, destinationCode).first()
-            if (favorite == null) {
-                flightRepository.insertFavorite(
-                    Favorite(
-                        departureCode = departureCode,
-                        destinationCode = destinationCode
-                    )
-                )
+            val favorite = Favorite(
+                departureCode = departureCode,
+                destinationCode = destinationCode
+            )
+            val existingFavorite = flightRepository.getFavoriteFlight(departureCode, destinationCode)
+            if (existingFavorite == null) {
+                flightRepository.insertFavoriteFlight(favorite)
             } else {
-                flightRepository.deleteFavorite(favorite)
+                flightRepository.deleteFavoriteFlight(existingFavorite)
             }
         }
     }
@@ -83,8 +120,6 @@ class FlightSearchViewModel @Inject constructor(
 
 data class FlightSearchUiState(
     val searchQuery: String = "",
-    val suggestions: List<Airport> = emptyList(),
     val selectedAirport: Airport? = null,
-    val flights: List<Airport> = emptyList(),
-    val favoriteFlights: List<FavoriteFlight> = emptyList()
 )
+
