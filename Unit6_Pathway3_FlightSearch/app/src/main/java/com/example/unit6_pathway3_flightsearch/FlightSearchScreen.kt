@@ -56,9 +56,8 @@ fun FlightSearchScreen(
                 FlightResultsList(
                     departureAirport = uiState.selectedAirport!!,
                     flights = uiState.flights,
-                    favoriteFlights = uiState.favoriteFlights, // Thêm danh sách yêu thích
+                    favoriteFlights = uiState.favoriteFlights,
                     onToggleFavorite = viewModel::toggleFavorite
-                    // Xóa viewModel khỏi đây
                 )
             }
         }
@@ -105,9 +104,8 @@ fun SuggestionsList(
 fun FlightResultsList(
     departureAirport: Airport,
     flights: List<Airport>,
-    favoriteFlights: List<FavoriteFlight>, // Thêm tham số này
+    favoriteFlights: List<FavoriteFlight>,
     onToggleFavorite: (String, String) -> Unit
-    // Xóa viewModel khỏi đây
 ) {
     Column {
         Text("Flights from ${departureAirport.iataCode}", style = MaterialTheme.typography.titleMedium)
@@ -156,11 +154,9 @@ fun FavoriteRoutesList(
 fun FlightRow(
     departureAirport: Airport,
     destinationAirport: Airport,
-    isFavorite: Boolean, // Nhận trạng thái yêu thích trực tiếp
+    isFavorite: Boolean,
     onToggleFavorite: (String, String) -> Unit
-    // Xóa viewModel khỏi đây
 ) {
-    // Xóa toàn bộ khối LaunchedEffect ở đây
 
     Card(
         modifier = Modifier
@@ -182,7 +178,6 @@ fun FlightRow(
             IconButton(
                 onClick = {
                     onToggleFavorite(departureAirport.iataCode, destinationAirport.iataCode)
-                    // Không cần cập nhật isFavorite ở đây nữa
                 }
             ) {
                 Icon(

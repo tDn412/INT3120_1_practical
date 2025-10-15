@@ -41,7 +41,6 @@ class FlightSearchViewModel @Inject constructor(
                 }
         }
 
-        // Luôn lắng nghe danh sách yêu thích
         viewModelScope.launch {
             flightRepository.getAllFavoriteFlights().collect { favorites ->
                 _uiState.update { it.copy(favoriteFlights = favorites) }
