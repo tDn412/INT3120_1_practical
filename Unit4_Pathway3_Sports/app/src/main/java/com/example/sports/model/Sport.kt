@@ -28,6 +28,7 @@ data class Sport(
     @StringRes val subtitleResourceId: Int,
     val playerCount: Int,
     val olympic: Boolean,
+    val caloriesPerWeek: Int,
     @DrawableRes val imageResourceId: Int,
     @DrawableRes val sportsImageBanner: Int,
     @StringRes val sportDetails: Int

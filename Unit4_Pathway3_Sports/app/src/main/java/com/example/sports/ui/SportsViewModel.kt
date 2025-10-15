@@ -56,6 +56,23 @@ class SportsViewModel : ViewModel() {
             it.copy(isShowingListPage = false)
         }
     }
+    private val _selectedSports = MutableStateFlow(setOf<Int>())
+    val selectedSports: StateFlow<Set<Int>> = _selectedSports
+
+    fun toggleSportSelection(id: Int) {
+        _selectedSports.value = if (_selectedSports.value.contains(id)) {
+            _selectedSports.value - id
+        } else {
+            _selectedSports.value + id
+        }
+    }
+
+    fun getTotalCalories(): Int {
+        return uiState.value.sportsList
+            .filter { _selectedSports.value.contains(it.id) }
+            .sumOf { it.caloriesPerWeek }
+    }
+
 }
 
 data class SportsUiState(
